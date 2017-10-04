@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<!--
+Jon Goodwin
+-->
+<html>
+    <head>
+        <!--
+        Customize this policy to fit your own app's needs. For more guidance, see:
+            https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
+        Some notes:
+            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+            * Enable inline JS: add 'unsafe-inline' to default-src
+        -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">-->
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=yes, initial-scale=1, maximum-scale=10, minimum-scale=1, width=device-width height=device-height">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        <title>Taxi</title>
+        <style>i { color: green; }</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    	<script type="text/javascript">
+	/*
+        function onLoadFunc0()
+        {
+            alert('ok');
+        }
+	*/
+
+		function onLoadFunc()
+		{
+			//init stuff
+			today   = new Date();
+			urlPort = getPlayServerURL();
+			document.getElementById("stopButton").disabled  = true;
+			document.getElementById("startButton").disabled = false;
+			document.getElementById("real").checked = true;
+			//	document.getElementById("sim").checked = false;//this is not needed
+			isRealChecked();//setup read-only
+			setActualDateTimeStart();
+			setActualDateTimeCurr();
+			setMileage("0.00");
+			setFare("0:00");
+
+    		var radios = document.myForm.realOrSim;
+    		//var prev = null;
+    		for(var i = 0; i < radios.length; i++)
+    		{
+        		radios[i].onclick = function()
+        		{
+            		//(prev) ? console.log("prev" + prev.value):null;
+            		//if(this !== prev)
+            		//{
+               		//	prev = this;
+            		//}
+            		//console.log("this" + i + this.value)
+            		isRealChecked();
+        		};
+    		}
+		}
+
+function getPosition()
+{
+   var options =
+   {
+      enableHighAccuracy: true,
+      maximumAge: 3600000
+   }
+   var watchID = navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+
+   function onSuccess(position)
+   {
+    alert('Latitude: '         + position.coords.latitude          + '\n' +
+         'Longitude: '         + position.coords.longitude         + '\n' +
+         'Altitude: '          + position.coords.altitude          + '\n' +
+         'Accuracy: '          + position.coords.accuracy          + '\n' +
+         'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
+         'Heading: '           + position.coords.heading           + '\n' +
+         'Speed: '             + position.coords.speed             + '\n' +
+         'Timestamp: '         + position.timestamp                + '\n');
+   };
+
+   function onError(error)
+   {
+      alert('code: '    + error.code    + '\n' + 'message: ' + error.message + '\n');
+   }
+}
+
+function watchPosition() {
+   var options = {
+      maximumAge: 3600000,
+      timeout: 3000,
+      enableHighAccuracy: true,
+   }
+   var watchID = navigator.geolocation.watchPosition(onSuccess, onError, options);
+
+   function onSuccess(position)
+   {
+      alert('Latitude: '       + position.coords.latitude          + '\n' +
+         'Longitude: '         + position.coords.longitude         + '\n' +
+         'Altitude: '          + position.coords.altitude          + '\n' +
+         'Accuracy: '          + position.coords.accuracy          + '\n' +
+         'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
+         'Heading: '           + position.coords.heading           + '\n' +
+         'Speed: '             + position.coords.speed             + '\n' +
+         'Timestamp: '         + position.timestamp                + '\n');
+   };
+
+   function onError(error)
+   {
+      alert('code: '    + error.code    + '\n' +'message: ' + error.message + '\n');
+   }
+}
+
+	function stringify (data)
+	{
+		//	var dataObj = JSON.parse(data);
+		//	console.log(dataObj.category); //will return xx
+		//	console.log(dataObj[1].category); //will return xx
+		console.log(JSON.stringify(data));
+	}
+
+	function postPlayFunc()
+	{
+	    var obj =
+	    {
+			 lat1   :  document.getElementById('start-lat').value,
+			 lon1   :  document.getElementById('start-long').value,
+			 lat2   :  document.getElementById('end-lat').value,
+			 lon2   :  document.getElementById('end-long').value,
+			 startDt:  getDateTimeStart( ),
+			 currDt :  getDateTimeCurr( )
+        };
+
+      $.ajax(
+      {
+        //url: "@routes.Application.upload()",
+        url: urlPort + '/taxi',
+        data: JSON.stringify(obj),
+        headers:
+        {
+          'Content-Type': 'application/json'
+        },
+        type: 'POST',
+		success: function(data)
+		{
+			console.log("getPlayFunc(success): " + "Data: " + data );
+		},
+		error: function(jqXHR, textStatus, error)
+		{
+			console.log("getPlayFunc(error): " + "jqXHR: " + JSON.stringify(jqXHR) + "\ntextStatus: " + textStatus + "\nerror" + error);
+		}
+      });
+
+	       /*$.post('http://192.168.1.100:9000/message',
+	        {
+			 lat1   :  document.getElementById('start-lat').value,
+			 lon1   :  document.getElementById('start-long').value,
+			 lat2   :  document.getElementById('end-lat').value,
+			 lon2   :  document.getElementById('end-long').value,
+			 startDt:  getDateTimeStart( ),
+			 currDt :  getDateTimeCurr( )
+
+	        },
+	        function(data,status)
+	        {
+					console.log("postPlayFunc(success): " + "Data: " + data );
+	        });*/
+	}
+
+	function getPlayFunc()
+	{
+//curl -X GET -D - http://192.168.1.100:9000/message
+			jQuery.get(urlPort + '/message', function (data, status)
+			{
+		  	// use response here; jQuery passes it as the first parameter
+		  			console.log("getPlayFunc: " + "Data: " + data + "\nStatus: " + status);//stringify(response)
+		});
+/*
+      $.ajax({
+        url: "@routes.Application.upload()",
+        data: JSON.stringify(obj),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        type: 'POST',
+        success: function(res) {
+          if (res) {
+            console.log("Success!");
+          } else {
+            console.log("Failed...");
+          }
+        }
+      });*/
+
+/*
+			jQuery.ajax(
+			{
+				url: 'http://192.168.1.100:9000/taxi',
+				success: function(data)
+				{
+					console.log("getPlayFunc(success): " + "Data: " + data );
+				},
+				error: function(jqXHR, textStatus, error)
+				{
+					console.log("getPlayFunc(error): " + "jqXHR: " + JSON.stringify(jqXHR) + "\ntextStatus: " + textStatus + "\nerror" + error);
+				}
+			});
+*/
+
+/*
+		jQuery.get('https://localhost:9000/message', function (data, status)
+		{
+	  	// use response here; jQuery passes it as the first parameter
+	  			console.log("getPlayFunc: " + "Data: " + data + "\nStatus: " + status);//stringify(response)
+		});
+
+
+		var resp = jQuery.get("https://localhost:9000/message")
+		console.log("getPlayFunc: " + stringify(resp));
+
+//		$.get("localhost:9000/message", function(data, status)
+//		{
+//            alert("Data: " + data + "\nStatus: " + status);
+//        });*/
+	}
+
+        function getPlayServerURL( )
+		{
+			var urlValue = document.getElementById('url').value;    // first element in DOM  (index 0) with name="url"
+			var portValue = document.getElementById('port').value;  // first element in DOM  (index 0) with name="port"
+			var urlWithPort = "http://" + urlValue + portValue;
+			console.log("getPlayServerURL: " + urlWithPort);
+			return urlWithPort;
+		}
+
+        function setMileage( str )
+		{
+			document.getElementById('mileage').value = str;
+			console.log("setMileage: " + str);
+		}
+
+        function getMileage( )
+		{
+			var milageValue = document.getElementById('mileage').value;
+			console.log("getMileage: " + milageValue);
+			return milageValue;
+		}
+
+
+        function setFare( str )
+		{
+			document.getElementById('fare').value = str;
+			console.log("setFare: " + str);
+		}
+
+        function getFare( )
+		{
+			var fareValue = document.getElementById('fare').value;
+			console.log("getFare: " + fareValue);
+			return fareValue;
+		}
+
+        function getTimerInterval( )
+		{
+			var timerValue = document.getElementById('timerInterval').value;
+			return timerValue;
+		}
+
+        function setTimerInterval( str )
+		{
+			document.getElementById('timerInterval').value = str;
+		}
+
+
+        function setActualDateTimeStart( )
+		{
+			today = new Date();
+			var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-' + today.getDate();
+//			var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+			var time = today.getHours() + ":" + today.getMinutes();
+			var str = date + " " + time;
+			document.getElementById('start-date-time').value = str;
+			console.log("setActualDateTimeStart: " + str);
+		}
+
+        function setDateTimeStart( str )
+		{
+			document.getElementById('start-date-time').value = str;
+			console.log("setDateTimeStart: " + str);
+		}
+
+        function getDateTimeStart( )
+		{
+			var dtValue = document.getElementById('start-date-time').value;
+			console.log("getDateTimeCurr: " + dtValue);
+			return dtValue;
+		}
+
+        function setActualDateTimeCurr( )
+		{
+			today = new Date();
+			var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-' + today.getDate();
+//			var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+			var time = today.getHours() + ":" + today.getMinutes() ;
+			var str = date + " " + time;
+			document.getElementById('curr-date-time').value = str;
+			console.log("setActualDateTimeCurr: " + str);
+		}
+
+        function setDateTimeCurr( str )
+		{
+			document.getElementById('curr-date-time').value = str;
+			console.log("setDateTimeCurr: " + str);
+		}
+
+        function getDateTimeCurr( )
+		{
+			var dtValue = document.getElementById('curr-date-time').value;
+			console.log("getDateTimeCurr: " + dtValue);
+			return dtValue;
+		}
+
+		function isRealChecked()
+		{
+			if(document.getElementById('real').checked)
+			{
+  				//real radio button is checked
+  				document.getElementById('mileage').readOnly = true;
+  				document.getElementById('fare').readOnly = true;
+  				document.getElementById('updateButton').disabled = true;
+  				console.log("isRealChecked: true");
+  				return true;
+			}
+			else
+			{
+  				//sim radio button is checked
+  				document.getElementById('mileage').readOnly = false;
+  				document.getElementById('fare').readOnly = false;
+  				document.getElementById('updateButton').disabled = false;
+  				 console.log("isRealChecked: false");
+  				return false;
+
+			}
+		}
+
+		function startFunc()
+		{
+			document.getElementById('startButton').disabled = true;
+			document.getElementById('stopButton').disabled  = false;
+			setActualDateTimeStart();
+			doUpdate();
+//		    alert("startFunc");
+		}
+
+		function doUpdate()
+		{
+			var date    = getDateTimeCurr();
+
+			//********************** Play Server does this ************************
+			setMileage(dummyLocalMileTest());
+			setFare(dummyLocalFareTest());
+
+			setActualDateTimeCurr();
+		  	console.log("doUpdate:" + "Date: " + date + "Mileage: " + mileage);
+		  	if(document.getElementById('stopButton').disabled  == false)
+		  	{
+		  		myTimer = setTimeout(function()
+				{
+					doUpdate();
+				}, parseInt(getTimerInterval()));
+			}
+		}
+
+		function stopFunc()
+		{
+			document.getElementById('stopButton').disabled  = true;
+			document.getElementById('startButton').disabled = false;
+            clearTimeout(myTimer);
+//		    alert("stopFunc");
+		}
+
+		function updateFunc()
+		{
+			var updateButton = document.getElementById('updateButton');
+			doUpdate();
+//		    alert("updateFunc");
+		}
+
+		function roundNumber(number, digits)
+		{
+            var multiple = Math.pow(10, digits);
+            var rndedNum = Math.round(number * multiple) / multiple;
+            return rndedNum;
+        }
+
+//https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-geolocation/
+//http://www.geodatasource.com/developers/javascript
+//https://stackoverflow.com/questions/7763327/how-to-calculate-date-difference-in-javascript
+//:::  Definitions:                                                           :::
+//:::    South latitudes are negative, east longitudes are positive           :::
+//:::                                                                         :::
+//:::  Passed to function:                                                    :::
+//:::    lat1, lon1 = Latitude and Longitude of point 1 (in decimal degrees)  :::
+//:::    lat2, lon2 = Latitude and Longitude of point 2 (in decimal degrees)  :::
+//:::    unit = the unit you desire for results                               :::
+//:::           where: 'M' is statute miles (default)                         :::
+//:::                  'K' is kilometers                                      :::
+//:::                  'N' is nautical miles
+
+		function distance(lat1, lon1, lat2, lon2, unit)
+		{
+			var radlat1 = Math.PI * lat1/180
+			var radlat2 = Math.PI * lat2/180
+			var theta = lon1-lon2
+			var radtheta = Math.PI * theta/180
+			var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+			dist = Math.acos(dist)
+			dist = dist * 180/Math.PI
+			dist = dist * 60 * 1.1515
+			if (unit=="K") { dist = dist * 1.609344 }
+			if (unit=="N") { dist = dist * 0.8684 }
+
+			var rounded = roundNumber(dist,2);
+			//setMileage(rounded);
+			return rounded;
+		}
+
+        function urlencode( str )
+		{
+		   var ret = str;
+		   ret = ret.toString();
+		   ret = encodeURIComponent(ret);
+		   ret = ret.replace(/%20/g, '+');
+		   return ret;
+		}
+
+		//the Play Framework server will do this
+        function dummyLocalMileTest(  )
+		{
+		    var mile     = "0.00";
+		    //***inputs***
+			var lat1    = document.getElementById('start-lat').value;
+			var lon1    = document.getElementById('start-long').value;
+			var lat2    = document.getElementById('end-lat').value;
+			var lon2    = document.getElementById('end-long').value;
+			var startDt = getDateTimeStart( );
+			var currDt  = getDateTimeCurr( );
+
+			//***do mile***
+			mile    = distance(lat1, lon1, lat2, lon2, "M");
+
+			return mile;
+		}
+
+		//the Play Framework server will do this
+        function dummyLocalFareTest(  )
+		{
+		    var fare     = "0.00";
+		    //***inputs***
+			var lat1    = document.getElementById('start-lat').value;
+			var lon1    = document.getElementById('start-long').value;
+			var lat2    = document.getElementById('end-lat').value;
+			var lon2    = document.getElementById('end-long').value;
+			var startDt = getDateTimeStart( );
+			var currDt  = getDateTimeCurr( );
+
+			//***do fare***
+			journeyTime(startDt, currDt);
+			var weekday = isWeekDay(startDt);
+			console.log("weekday: " + weekday);
+
+			var tariff = 0;
+			var rate   = 0;
+			var mile   = dummyLocalMileTest( );
+			console.log("mile: " + mile);
+			if(mile < 6)
+			{
+				console.log("mile less than 6: " + mile);
+				if (tariff_1_test(startDt))
+				{
+					rate = 2.74;
+				}
+				if (tariff_2_test(startDt))
+				{
+					rate = 3.37;
+				}
+				if (tariff_3_test(startDt))
+				{
+					rate = 3.96;
+				}
+			}
+			else
+			{
+				//over 6 miles, new rate
+				//work out 6 mile rate (save fare)
+				//subtract 6 miles from total mileage
+				//work out over 6 mile rate and add to saved fare
+
+				console.log("mile more than 6: " + mile);
+				rate = 3.70;
+			}
+
+			console.log("rate: " + rate);
+			fare = mile * rate;
+			var roundedFare = roundNumber(fare,2);
+
+			return roundedFare;
+		}
+
+	// Saturday and Sunday else its Monday to Friday
+	function isWeekDay(startDt)
+	{
+		var start = moment(startDt, "YYYY-M-D HH:mm:ss");
+		if (start.isoWeekday() !== 6 && start.isoWeekday() !== 7)
+		{
+			return true;
+		}
+  		else return false;
+	}
+
+	function isDayTime(startDt)//05:00-20:00
+	{
+  		return true;
+	}
+
+	function isEveningTime(startDt)//20:00-22:00
+	{
+  		return true;
+	}
+
+	function isNightTime(startDt)//22:00-05:00
+	{
+  		return true;
+	}
+
+
+	function isPubHolidayTime(startDt)//Public holidays
+	{
+  		return true;
+	}
+
+	function journeyTime(startDt, endDt)//journeyTime
+	{
+		var start = moment(startDt, "YYYY-M-D HH:mm:ss");
+		var end   = moment(endDt  , "YYYY-M-D HH:mm:ss");
+		var diff  = end.diff(start, 'minutes');
+		console.log("journeyTime: " + diff);
+	}
+
+	function isBoundaryCrossedTest(startDt)//Boundary (edge) conditions
+	{
+  		return false;
+	}
+
+	function tariff_1_test(startDt)
+	{
+		//for journeys up to 6 miles
+		//Monday to Friday, 05:00-20:00
+  		return true;
+	}
+
+	function tariff_2_test(startDt)
+	{
+		//for journeys up to 6 miles
+		//Monday to Friday, 20:00-22:00
+		//Saturday and Sunday, 05:00-22:00
+  		return true;
+	}
+
+
+	function tariff_3_test(startDt)
+	{
+		//Every night, 22:00-05:00
+		//Public holidays
+  		return true;
+	}
+
+	function tariff_4_test(startDt)
+	{
+		//Tariff rate for journeys over 6 miles
+		//Monday to Friday, 05:00-20:00
+  		return true;
+	}
+
+/*
+	//var xxx = Math.floor(Math.random() * 20);//randomNumberBetween0and19
+	function randomWholeNum()
+	{
+  		return Math.random();
+	}
+*/
+			//*******when page loaded*******
+			window.onload = onLoadFunc;
+			var myTimer;
+			var today;
+			var urlPort;
+
+    	</script>
+
+<script src="js/moment.js"></script>
+<script>
+    moment().format();
+</script>
+
+    </head>
+
+    <!-- body     <body onload="javascript:onLoadFunc()"> -->
+    <body>
+
+        <div class="app">
+            <h3>Taxi</h3>
+            <div id="deviceready" class="blink">
+                <p class="event listening">Connecting to Device</p>
+                <p class="event received">Device is Ready</p>
+            </div>
+        </div>
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script src="./jquery.min.js"></script>
+
+<div><center>
+	Play Server URL :
+    <input type="text" name="url" id="url" value="192.168.1.100"><br>
+</div></center><br>
+<div><center>
+    Play Server Port:
+    <input type="text" name="port" id="port" value=":9000"><br>
+</div></center><br>
+
+<center>
+<div><button onclick="startFunc()" id="startButton">Start</button>
+<button onclick="stopFunc()" id="stopButton">Stop</button></div>
+<div><button onclick="getPlayFunc()" id="getButton">Get</button>
+<button onclick="postPlayFunc()" id="postButton">Post</button></div>
+<div><button id = "getPosition">CURRENT POSITION</button>
+<button id = "watchPosition">WATCH POSITION</button></div>
+</center>
+<!--<form name='myForm' action="test.php" method="post" onsubmit='return validate()'>-->
+<div><center>
+<form name="myForm">
+	Real-time:
+  <input type="radio" name="realOrSim" id="real">
+	Simulate:
+  <input type="radio" name="realOrSim" id="sim">
+  </form>
+</div></center><br>
+<!--  <input type="submit" value="Submit">
+</form>-->
+
+<div><center>
+	Start Latitude:
+    <input type="text" name="start-lat" id="start-lat" value="0.0"></div></center><br>
+
+<div><center>
+	Start Longitude:
+    <input type="text" name="start-long" id="start-long" value="0.0"></div></center><br>
+
+
+<div><center>
+	End Latitude:
+    <input type="text" name="end-lat" id="end-lat" value="0.0"></div></center><br>
+
+<div><center>
+	End Longitude:
+    <input type="text" name="end-long" id="end-long" value="0.0"></div></center><br>
+
+
+<div><center>
+	Start Date and Time  :<br>
+	<input type="text" name="start-date-time" id="start-date-time" value="2017-9-18 5:45:26">
+</div></center><br>
+
+<div><center>
+	Current Date and Time  :<br>
+	<input type="text" name="curr-date-time" id="curr-date-time" value="2017-9-18 5:45:26">
+</div></center><br>
+
+<div><center>
+	Timer Interval (ms)  :<br>
+	<input type="text" name="timerInterval" id="timerInterval" value="5000">
+</div></center><br>
+
+<div><center>
+	Mileage (Miles):
+    <input type="text" name="mileage" id="mileage" value="0.0"></div></center><br>
+
+<div><center>
+    Fare (&pound)  :
+    <input type="text" name="fare" id="fare" value="0.00"><br>
+</div></center><br>
+
+<div><center><button onclick="updateFunc()" id="updateButton">Manual Update</button></div></center><br>
+
+
+
+<!--
+<div>
+<form align="center" method=post>
+    <input id="mainText" type="text" align="center"placeholder="Search">
+
+    <input type="submit" onclick="myFunction()" style="position: absolute; left: 450px"/>
+</form>
+</div>
+<script>
+function myFunction(){
+    $a= document.getElementById("mainText").value;
+    alert($a);
+        }
+</script>
+-->
+
+
+
+    <!--
+        <div class="app">
+            <h1>Apache Cordova</h1>
+            <div id="deviceready" class="blink">
+                <p class="event listening">Connecting to Device</p>
+                <p class="event received">Device is Ready</p>
+                				<p class="option-four"><strong>cordova: </strong><span></span><i></i></p>
+                <p class="option-one"><strong>navigator.onLine: </strong><span></span><i></i></p>
+                <p class="option-two"><strong>addEventListener: </strong><span></span><i></i></p>
+				<p class="option-three"><strong>ajax: </strong><span></span><i></i></p>
+            </div>
+        </div>
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        	<script src="./jquery.min.js"></script>
+
+        	<script>
+        	// call the functions //
+			option1();
+			option3();
+			option4();
+
+			function option1()
+			{
+				//var isOffline = 'onLine' in navigator && !navigator.onLine,
+				var isOffline = !navigator.onLine;
+				var text      = isOffline == true ? ' without connection ' : ' connected ';
+
+				jQuery('.option-one span').text(text);
+				jQuery('.option-one i').text('checked').hide().fadeIn(200);
+
+				setTimeout(function()
+				{
+					option1();
+				}, 1000);
+			}
+
+	document.addEventListener('offline', function(){ jQuery('.option-two span').text(' without connection'); }, false);
+	document.addEventListener('online', function(){ jQuery('.option-two span').text(' connected'); }, false);
+
+	//option3 //
+
+	function option3()
+	{
+		jQuery.ajax(
+		{
+			url: '/stackoverflow/blank.php',
+			success: function(data)
+			{
+				print(' connected ');
+			},
+			error: function(jqXHR, textStatus, error)
+			{
+				print(' without connection ');
+			}
+		});
+
+		function print(text)
+		{
+			jQuery('.option-three span').text(text);
+			jQuery('.option-three i').text('checked').hide().fadeIn(200);
+
+			setTimeout(function()
+			{
+				option3();
+			}, 2000);
+		}
+	}
+
+function option4()
+{
+		var networkState = navigator.connection.type;
+	setTimeout(function checkConnection()
+	{
+//	    networkState = navigator.connection.type;
+	    networkState = checkConnection1();
+
+	    var states = {};
+
+//		states[Connection.UNKNOWN]  = 'Unknown connection';
+//	    states[Connection.ETHERNET] = 'Ethernet connection';
+//	    states[Connection.WIFI]     = 'WiFi connection';
+//	    states[Connection.CELL_2G]  = 'Cell 2G connection';
+//	    states[Connection.CELL_3G]  = 'Cell 3G connection';
+//	    states[Connection.CELL_4G]  = 'Cell 4G connection';
+//	    states[Connection.CELL]     = 'Cell generic connection';
+//	    states[Connection.NONE]     = 'No network connection';
+
+	    states[navigator.connection.UNKNOWN]  = 'Unknown connection';
+		states[navigator.connection.ETHERNET] = 'Ethernet connection';
+		states[navigator.connection.WIFI]     = 'WiFi connection';
+		states[navigator.connection.CELL_2G]  = 'Cell 2G connection';
+		states[navigator.connection.CELL_3G]  = 'Cell 3G connection';
+		states[navigator.connection.CELL_4G]  = 'Cell 4G connection';
+		states[navigator.connection.CELL]     = 'Cell generic connection';
+		states[navigator.connection.NONE]     = 'No network connection';
+
+	    //alert('Connection type: ' + states[networkState]);//
+			jQuery('.option-four span').text(states[networkState]);
+			jQuery('.option-four i').text('checked').hide().fadeIn(200);
+
+	    	setTimeout(function()
+			{
+				option4();
+			}, 1000);
+	}, 500);
+}
+
+	function checkConnection1()
+	{
+        var networkState;
+        var test = cordova.exec(
+                function(winParam) {networkState = winParam;},
+//                function(error) {alert("Network Manager error: " + error);},
+                function(error) {"Network Manager error: " + error;},
+                "NetworkStatus",
+                "getConnectionInfo",
+                []
+        );
+        return networkState;
+	}
+
+			</script>
+-->
+    </body>
+</html>

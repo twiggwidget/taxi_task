@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Taxi</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <script type="text/javascript">
+
+        function onLoadFunc0() {
+            alert('ok');
+        }
+
+
+	function onLoadFunc()
+	{
+		var urlValue = document.getElementsByName('url')[0].value;    // first element in DOM  (index 0) with name="url"
+		var portValue = document.getElementsByName('port')[0].value;  // first element in DOM  (index 0) with name="port"
+		document.getElementById("real").checked = true;
+		//	document.getElementById("sim").checked = false;
+	}
+
+	function isRealChecked()
+	{
+	    var real = document.getElementById("real").isChecked ;
+	}
+
+	function StartFunc()
+	{
+	    $a= urlValue + portValue;
+	    alert($a);
+	}
+
+	function ManUpdateFunc()
+	{
+	    $a= urlValue + portValue;
+	    alert($a);
+	}
+
+    function urlencode( str )
+	{
+
+	   var ret = str;
+	   ret = ret.toString();
+	   ret = encodeURIComponent(ret);
+	   ret = ret.replace(/%20/g, '+');
+	   return ret;
+	}
+
+	function Func2()
+	{
+	    $a= document.getElementById("mainText").value;
+	    alert($a);
+	}
+
+window.onload = onLoadFunc;
+
+        </script>
+    </head>
+    <body>
+
+<div>
+	Play Server URL:
+    <input type="text" name="url" id="url" value="192.168.1.100">
+    Play Server Port:
+    <input type="text" name="port" id="port" value=":9000">
+</div>
+
+<div><button onclick="StartFunc()">Start</button></div>
+
+<!--<form name='myForm' action="test.php" method="post" onsubmit='return validate()'>-->
+<div>
+	Real-time:
+  <input type="radio" name="realOrSim" id="real">
+	Simulate:
+  <input type="radio" name="realOrSim" id="sim">
+<div>
+<!--  <input type="submit" value="Submit">
+</form>-->
+
+<div>
+	Date and Time:
+	<input type="text" name="date-time" id="date-time" value="18/09/2017 23:13:54">
+</div>
+
+<div>
+	Mileage (Miles):
+    <input type="text" name="mileage" id="mileage" value="0">
+    Fare (£):
+    <input type="text" name="fare" id="fare" value=":0.00">
+</div>
+
+<div><button onclick="ManUpdateFunc()">Manual Update</button></div>
+
+    </body>
+
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no">
+	<title>Check Internet Connection in Android WebView</title>
+	<style>i { color: green; }</style>
+</head>
+<body>
+	<p class="option-one"><strong>navigator.onLine: </strong><span></span><i></i></p>
+	<p class="option-two"><strong>addEventListener: </strong><span></span><i></i></p>
+	<p class="option-three"><strong>ajax: </strong><span></span><i></i></p>
+
+<!--	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>-->
+		<script src="./jquery.min.js"></script>
+
+	<script>
+	option1();
+	option3();
+
+	function option1(){
+		var isOffline = 'onLine' in navigator && !navigator.onLine,
+			text = isOffline == true ? ' without connection ' : ' connected ';
+
+		jQuery('.option-one span').text(text);
+		jQuery('.option-one i').text('checked').hide().fadeIn(200);
+
+		setTimeout(function(){
+			option1();
+		}, 1000);
+	}
+
+	/* */
+
+	window.addEventListener('offline', function(){ jQuery('.option-two span').text(' without connection'); }, false);
+	window.addEventListener('online', function(){ jQuery('.option-two span').text(' connected'); }, false);
+
+	/* */
+
+	function option3(){
+		jQuery.ajax({
+			url: '/stackoverflow/blank.php',
+			success: function(data){
+				print(' connected ');
+			},
+			error: function(jqXHR, textStatus, error) {
+				print(' without connection ');
+			}
+		});
+
+		function print(text){
+			jQuery('.option-three span').text(text);
+			jQuery('.option-three i').text('checked').hide().fadeIn(200);
+
+			setTimeout(function(){
+				option3();
+			}, 2000);
+		}
+	}
+
+	</script>
+</body>
+</html>
