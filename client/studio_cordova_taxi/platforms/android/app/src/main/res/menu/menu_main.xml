@@ -1,0 +1,51 @@
+<menu
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".HelloActivity">
+    
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="100"
+         />
+        
+     <item
+		android:id="@+id/action_settings1"
+		android:title="@string/action_settings1"
+		android:orderInCategory="101"
+         />
+
+     <item
+		android:id="@+id/action_settings2"
+		android:title="@string/action_settings2"
+		android:orderInCategory="102"
+         />
+
+     <item
+		android:id="@+id/action_settings3"
+		android:title="@string/action_settings3"
+		android:orderInCategory="103"
+         />        
+ 
+         
+      <item
+ 		android:id="@+id/action_settings4"
+ 		android:title="@string/action_settings4"
+ 		android:orderInCategory="104"
+         />  
+
+     <item
+        android:id="@+id/menu_about"
+        android:orderInCategory="106"
+		 android:title="@string/action_settings5"/>
+        
+    <item 
+    	  android:id="@+id/menu_back"
+          android:title="Back"
+          android:alphabeticShortcut='b'
+          android:orderInCategory="106"
+          />
+	<!-- android:showAsAction="always" android:icon="@drawable/ic_menu_back"-->
+
+</menu>
